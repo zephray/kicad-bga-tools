@@ -1,12 +1,25 @@
 from pcbnew import *
 from bga_utils import *
 from math import sqrt
+import wx
 
+# 20170902 - Greg Smith
+#     Added pbyn to replace Pad.GetNetCode()
+#     Added ActionPlugin support
+#     Added dialog to request skip layers and layer quadrants
 
 def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
     vias = []
 
-    net = get_first_pad(mod).GetNet()
+    #GetNodesCount:
+    pbyn={};k=[pbyn.setdefault(p.GetNetCode(),[]).append(p) for p in GetBoard().GetPads()]
+    
+    for first_pad in mod.Pads():
+        if len(pbyn[first_pad.GetNetCode()]) > 1:
+            break
+            
+    #net = get_first_pad(mod).GetNet()
+    net = first_pad.GetNet()
 
     via_dia = net.GetViaSize()
     isolation = net.GetClearance(None)
@@ -18,7 +31,9 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
     ofsx = fx/2
     ofsy = (dist-fy)/2
 
-    for pad in filter(lambda p: p.GetNet().GetNodesCount() > 1, mod.Pads()):
+    
+    for pad in filter(lambda p:len(pbyn[p.GetNetCode()])>1,mod.Pads()):
+    #for pad in filter(lambda p: p.GetNet().GetNodesCount() > 1, mod.Pads()):
         pad_pos = get_pad_position(bga_info, pad)
         if is_pad_outer_ring(bga_info, pad_pos, skip_outer):
             continue
@@ -72,13 +87,58 @@ def make_dogbones(board, mod, skip_outer, edge_layers):
     info = get_bga_info(mod)
     return [info.spacing, make_dogbone(board, mod, info, skip_outer, edge_layers)]
 
+def run_original():
+    my_board = LoadBoard("test11.kicad_pcb")
+    my_board.BuildListOfNets()
 
-my_board = LoadBoard("test11.kicad_pcb")
-my_board.BuildListOfNets()
+    mod = my_board.FindModuleByReference("t.xc7.inst")
 
-mod = my_board.FindModuleByReference("t.xc7.inst")
+    # Skip zero layers and route 6 layer quadrants with shifted vias and 1 transition layer
+    data = make_dogbones(my_board, mod, 0, 6)
 
-# Skip zero layers and route 6 layer quadrants with shifted vias and 1 transition layer
-data = make_dogbones(my_board, mod, 0, 6)
+    SaveBoard("test1.kicad_pcb", my_board)
 
-SaveBoard("test1.kicad_pcb", my_board)
+def help():
+    print "This python script runs on the currently-loaded board and the selected module."
+
+def run():
+    my_board = GetBoard()
+    my_board.BuildListOfNets()
+
+    #mod = my_board.FindModuleByReference("t.xc7.inst")
+    mod = filter(lambda m: m.IsSelected(), my_board.GetModules())
+
+    if len(mod) != 1:
+        wx.MessageDialog(None,message="This python script runs on the currently-loaded board and the selected module.",style=wx.OK).ShowModal()
+        return
+
+    d = wx.TextEntryDialog(None,message="Enter Number of Layers to Skip")
+    if d.ShowModal() != wx.ID_OK:
+        return
+        
+    try: skip = int(d.GetValue())
+    except: return
+
+    d = wx.TextEntryDialog(None,message="Enter Number of Layer Quadrants")
+    if d.ShowModal() != wx.ID_OK:
+        return
+        
+    try: quadrants = int(d.GetValue())
+    except: return
+
+    # Skip zero layers and route 6 layer quadrants with shifted vias and 1 transition layer
+    data = make_dogbones(my_board, mod[0], skip, quadrants)
+
+class menu(ActionPlugin):
+    def defaults( self ):
+        """Support for ActionPlugin"""
+        self.name = "BGA Dogbone"
+        self.category = "Layout"
+        self.description = "Create dogbones on the selected BGA."
+    def Run(self):
+        run()
+
+try:
+    menu().register()
+except:
+    pass
