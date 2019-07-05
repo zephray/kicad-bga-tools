@@ -32,7 +32,7 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
     ofsy = (dist-fy)/2
 
     
-    for pad in filter(lambda p:len(pbyn[p.GetNetCode()])>1,mod.Pads()):
+    for pad in filter(lambda p: p.GetNetCode()>0,mod.Pads()):
     #for pad in filter(lambda p: p.GetNet().GetNodesCount() > 1, mod.Pads()):
         pad_pos = get_pad_position(bga_info, pad)
         if is_pad_outer_ring(bga_info, pad_pos, skip_outer):
