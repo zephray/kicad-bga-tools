@@ -29,4 +29,4 @@ Example with edge_layers=6, and skip_outer=0. Blue indicates shifted column/row 
 
 ## Usage
 
-Copy two python scripts to your plugin folder (e.g., ```C:\Users\Username\AppData\Roaming\kicad\scripting\plugins```, or ```\Users\Username\Library\kicad\scripting\plugins```). In the pcbnew, select the part, use Tools -> External Plugins -> BGA Dogbone.
+Copy two python scripts to your plugin folder (e.g., ```C:\Users\Username\AppData\Roaming\kicad\scripting\plugins```, or ```/Users/Username/Library/kicad/scripting/plugins```). In the pcbnew, select the part, use Tools -> External Plugins -> BGA Dogbone.
