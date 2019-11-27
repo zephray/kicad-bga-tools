@@ -13,11 +13,11 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
 
     #GetNodesCount:
     pbyn={};k=[pbyn.setdefault(p.GetNetCode(),[]).append(p) for p in GetBoard().GetPads()]
-    
+
     for first_pad in mod.Pads():
         if len(pbyn[first_pad.GetNetCode()]) > 1:
             break
-            
+
     #net = get_first_pad(mod).GetNet()
     net = first_pad.GetNet()
 
@@ -31,9 +31,9 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
     ofsx = fx/2
     ofsy = (dist-fy)/2
 
-    
-    for pad in filter(lambda p: p.GetNetCode()>0,mod.Pads()):
-    #for pad in filter(lambda p: p.GetNet().GetNodesCount() > 1, mod.Pads()):
+    #for pad in mod.Pads():
+    for pad in list(filter(lambda p: p.GetNetCode()>0,mod.Pads())):
+    #for pad in list(filter(lambda p: p.GetNet().GetNodesCount() > 1, mod.Pads())):
         pad_pos = get_pad_position(bga_info, pad)
         if is_pad_outer_ring(bga_info, pad_pos, skip_outer):
             continue
@@ -99,14 +99,14 @@ def run_original():
     SaveBoard("test1.kicad_pcb", my_board)
 
 def help():
-    print "This python script runs on the currently-loaded board and the selected module."
+    print("This python script runs on the currently-loaded board and the selected module.")
 
 def run():
     my_board = GetBoard()
     my_board.BuildListOfNets()
 
     #mod = my_board.FindModuleByReference("t.xc7.inst")
-    mod = filter(lambda m: m.IsSelected(), my_board.GetModules())
+    mod = list(filter(lambda m: m.IsSelected(), my_board.GetModules()))
 
     if len(mod) != 1:
         wx.MessageDialog(None,message="This python script runs on the currently-loaded board and the selected module.",style=wx.OK).ShowModal()
@@ -115,14 +115,14 @@ def run():
     d = wx.TextEntryDialog(None,message="Enter Number of Layers to Skip")
     if d.ShowModal() != wx.ID_OK:
         return
-        
+
     try: skip = int(d.GetValue())
     except: return
 
     d = wx.TextEntryDialog(None,message="Enter Number of Layer Quadrants")
     if d.ShowModal() != wx.ID_OK:
         return
-        
+
     try: quadrants = int(d.GetValue())
     except: return
 

@@ -1,5 +1,5 @@
 from pcbnew import *
-
+from functools import reduce
 
 class BgaInfo:
     spacing = 0.0
