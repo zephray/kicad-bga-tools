@@ -18,11 +18,14 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
         if len(pbyn[first_pad.GetNetCode()]) > 1:
             break
 
-    #net = get_first_pad(mod).GetNet()
-    net = first_pad.GetNet()
-
-    via_dia = net.GetViaSize()
-    isolation = net.GetClearance(None)
+    netclasses = board.GetDesignSettings().GetNetClasses()
+    nc = netclasses.GetDefault()
+    #net = first_pad.GetNet()
+    #nc = net.GetNetClass()
+    via_dia = nc.GetViaDiameter()
+    via_drill = nc.GetViaDrill()
+    isolation = nc.GetClearance()
+    track_width = nc.GetTrackWidth()
     dist = bga_info.spacing
 
     fy = sqrt((isolation+via_dia)**2-(dist/2)**2)
@@ -71,13 +74,14 @@ def make_dogbone(board, mod, bga_info, skip_outer, edge_layers):
         new_track.SetEnd(ep)
         new_track.SetNetCode(pad.GetNetCode())
         new_track.SetLayer(pad.GetLayer())
+        new_track.SetWidth(track_width)
         board.Add(new_track)
         # Create via
         new_via = VIA(board)
         new_via.SetPosition(ep)
         new_via.SetNetCode(pad.GetNetCode())
-        new_via.SetDrill(pad.GetNet().GetViaDrillSize())
-        new_via.SetWidth(pad.GetNet().GetViaSize())
+        new_via.SetDrill(via_drill)
+        new_via.SetWidth(via_dia)
         board.Add(new_via)
         vias.append(new_via)
     return vias
@@ -106,7 +110,7 @@ def run():
     my_board.BuildListOfNets()
 
     #mod = my_board.FindModuleByReference("t.xc7.inst")
-    mod = list(filter(lambda m: m.IsSelected(), my_board.GetModules()))
+    mod = list(filter(lambda m: m.IsSelected(), my_board.GetFootprints()))
 
     if len(mod) != 1:
         wx.MessageDialog(None,message="This python script runs on the currently-loaded board and the selected module.",style=wx.OK).ShowModal()
